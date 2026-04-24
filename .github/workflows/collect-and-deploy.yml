@@ -1,0 +1,102 @@
+name: Collect Action Performance Data
+
+on:
+  # Run once per day at 02:00 UTC
+  schedule:
+    - cron: "0 2 * * *"
+
+  # Allow manual triggering (useful for the initial run)
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: "Force a full refresh (ignore existing data and re-fetch from initial_lookback_days)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+# Only allow one instance to run at a time to prevent data corruption
+concurrency:
+  group: collect-data
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # needed to push docs/data.json back to the repo
+  pages: write      # needed to deploy to GitHub Pages
+  id-token: write   # needed for OIDC-based Pages deployment
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch with a token so we can push back
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Remove existing data (full refresh)
+        if: ${{ github.event.inputs.full_refresh == 'true' }}
+        run: |
+          echo "Full refresh requested – removing docs/data.json"
+          rm -f docs/data.json
+
+      - name: Collect workflow run data
+        env:
+          # Use a PAT stored as a repository secret if the target repository is
+          # different from this one (cross-repo access). For same-repo tracking
+          # GITHUB_TOKEN is sufficient.
+          GITHUB_TOKEN: ${{ secrets.DATA_COLLECTION_TOKEN || secrets.GITHUB_TOKEN }}
+          CONFIG_FILE: actions-performance.toml
+          DATA_FILE: docs/data.json
+        run: uv run scripts/collect_runs.py
+
+      - name: Commit and push data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data.json
+          # Only commit if there are staged changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update action performance data [skip ci]"
+            git push
+          fi
+
+  deploy:
+    needs: collect
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Pull the latest commit that includes the data update
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+
+      # Re-pull in case the collect job just pushed a new commit
+      - name: Pull latest changes
+        run: git pull origin ${{ github.ref_name }} || true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

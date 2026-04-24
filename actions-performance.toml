@@ -1,0 +1,29 @@
+# Action Performance Tracker Configuration
+#
+# Copy this file to your repository and configure the settings below.
+# This file controls which repository is tracked and how the site appears.
+
+[site]
+# Title displayed at the top of the dashboard
+title = "GitHub Actions Performance Tracker"
+
+# Short description shown below the title
+description = "Monitor the duration and success rate of GitHub Actions workflows over time."
+
+# (Optional) URL of a favicon, relative to the site root or absolute URL
+# favicon = "/favicon.ico"
+
+[repository]
+# The GitHub repository to track, in "owner/repo" format
+owner = "conda"
+repo = "conda"
+
+# (Optional) Limit tracking to specific workflow file names (without path).
+# If omitted or empty, ALL workflows in the repository are tracked.
+# Example: workflows = ["ci.yml", "release.yml"]
+workflows = []
+
+[collection]
+# How many days back to fetch on the very first (or manual) run.
+# Subsequent scheduled runs only fill gaps since the last collected record.
+initial_lookback_days = 90

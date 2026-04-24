@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Action Performance Tracker</title>
+
+  <!-- Plotly CDN -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+
+  <style>
+    /* ---- Reset & base ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d1117;
+      --surface:     #161b22;
+      --border:      #30363d;
+      --text:        #c9d1d9;
+      --text-muted:  #8b949e;
+      --accent:      #58a6ff;
+      --success:     #3fb950;
+      --failure:     #f85149;
+      --cancelled:   #e3b341;
+      --skipped:     #8b949e;
+      --radius:      8px;
+      --font:        -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ---- Layout ---- */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    header p.subtitle {
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-size: 0.875rem;
+    }
+
+    header .meta {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ---- Controls ---- */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .controls label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.875rem;
+      padding: 6px 10px;
+      cursor: pointer;
+      outline: none;
+    }
+    select:focus { border-color: var(--accent); }
+
+    /* ---- Summary cards ---- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .card .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .card.success  .value { color: var(--success); }
+    .card.failure  .value { color: var(--failure); }
+    .card.cancelled .value { color: var(--cancelled); }
+    .card.neutral  .value { color: var(--accent); }
+
+    /* ---- Chart containers ---- */
+    .chart-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      min-height: 500px;
+    }
+
+    .chart-section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .chart-section .chart-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .chart-wrapper { width: 100%; }
+
+    /* ---- Tabs (workflow selector) ---- */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      background: none;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 8px 14px;
+      transition: color 0.15s, background 0.15s;
+      position: relative;
+      bottom: -1px;
+    }
+
+    .tab-btn:hover { color: var(--text); background: var(--border); }
+
+    .tab-btn.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--accent);
+      border-bottom-color: var(--surface);
+    }
+
+    /* ---- Loading / error ---- */
+    #loading, #error-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    #error-msg { color: var(--failure); display: none; }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      header { padding: 14px; }
+      main   { padding: 14px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1 id="site-title">Action Performance Tracker</h1>
+  <p class="subtitle" id="site-description"></p>
+  <p class="meta">
+    Repository: <a id="repo-link" href="#" target="_blank" rel="noopener"></a>
+    &nbsp;·&nbsp;
+    Last updated: <span id="last-updated">—</span>
+  </p>
+</header>
+
+<main>
+  <div id="loading">Loading data…</div>
+  <div id="error-msg"></div>
+
+  <div id="app" style="display:none">
+    <!-- Range selector -->
+    <div class="controls">
+      <label for="range-select">Time range:</label>
+      <select id="range-select">
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90" selected>Last 90 days</option>
+        <option value="180">Last 180 days</option>
+        <option value="0">All time</option>
+      </select>
+    </div>
+
+    <!-- Workflow tabs -->
+    <div class="tabs" id="workflow-tabs"></div>
+
+    <!-- Summary cards -->
+    <div class="cards" id="summary-cards"></div>
+
+    <!-- Duration time-series chart -->
+    <div class="chart-section" id="ts-section">
+      <h2>Successful run duration trend</h2>
+      <p class="chart-subtitle">Daily average duration of successful runs (minutes)</p>
+      <div class="chart-wrapper">
+        <div id="ts-chart"></div>
+      </div>
+    </div>
+
+    <!-- Success / failure bar chart -->
+    <div class="chart-section">
+      <h2>Daily outcome counts</h2>
+      <p class="chart-subtitle">Stacked bars showing run conclusions per day</p>
+      <div class="chart-wrapper">
+        <div id="outcome-chart"></div>
+      </div>
+    </div>
+
+    <!-- Average duration bar chart -->
+    <div class="chart-section">
+      <h2>Average duration by workflow</h2>
+      <p class="chart-subtitle">Mean run duration (minutes) across all selected workflows</p>
+      <div class="chart-wrapper">
+        <div id="avg-chart"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ============================================================
+// Constants & helpers
+// ============================================================
+const PLOTLY_LAYOUT_BASE = {
+  paper_bgcolor: "rgba(0,0,0,0)",
+  plot_bgcolor:  "rgba(0,0,0,0)",
+  font:          { color: "#c9d1d9", family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", size: 12 },
+  margin:        { t: 10, r: 20, b: 50, l: 60 },
+  xaxis:         { gridcolor: "#30363d", linecolor: "#30363d", tickcolor: "#8b949e" },
+  yaxis:         { gridcolor: "#30363d", linecolor: "#30363d", tickcolor: "#8b949e", rangemode: "tozero" },
+  legend:        { bgcolor: "rgba(0,0,0,0)", bordercolor: "#30363d", borderwidth: 1 },
+  hovermode:     "closest",
+};
+
+const CONCLUSION_COLORS = {
+  success:    "#3fb950",
+  failure:    "#f85149",
+  cancelled:  "#e3b341",
+  skipped:    "#8b949e",
+  in_progress:"#58a6ff",
+  timed_out:  "#d29922",
+};
+
+function conclusionColor(c) { return CONCLUSION_COLORS[c] || "#8b949e"; }
+
+function fmtDuration(secs) {
+  if (secs == null) return "—";
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function toMins(secs) {
+  return secs != null ? +(secs / 60).toFixed(2) : null;
+}
+
+function cutoffDate(rangeDays) {
+  if (!rangeDays) return null;
+  const d = new Date();
+  d.setDate(d.getDate() - rangeDays);
+  return d;
+}
+
+function filterByRange(runs, cutoff) {
+  if (!cutoff) return runs;
+  return runs.filter(r => r.started_at && new Date(r.started_at) >= cutoff);
+}
+
+// ============================================================
+// State
+// ============================================================
+let RAW_DATA = null;       // full parsed JSON
+let ACTIVE_WF_ID = null;   // currently selected workflow id (null = "All")
+let RANGE_DAYS = 90;
+
+// ============================================================
+// Boot
+// ============================================================
+async function init() {
+  try {
+    const resp = await fetch("data.json");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching data.json`);
+    RAW_DATA = await resp.json();
+  } catch (err) {
+    document.getElementById("loading").style.display = "none";
+    const errEl = document.getElementById("error-msg");
+    errEl.textContent = `Failed to load data: ${err.message}`;
+    errEl.style.display = "block";
+    return;
+  }
+
+  // Populate header
+  const meta = RAW_DATA.meta || {};
+  document.title = meta.title || "Action Performance Tracker";
+  document.getElementById("site-title").textContent = meta.title || "Action Performance Tracker";
+  document.getElementById("site-description").textContent = meta.description || "";
+  document.getElementById("last-updated").textContent =
+    meta.last_updated ? new Date(meta.last_updated).toLocaleString() : "—";
+  const repoLink = document.getElementById("repo-link");
+  if (meta.owner && meta.repo) {
+    repoLink.href = `https://github.com/${meta.owner}/${meta.repo}`;
+    repoLink.textContent = `${meta.owner}/${meta.repo}`;
+  } else {
+    repoLink.parentElement.style.display = "none";
+  }
+
+  buildTabs();
+  bindControls();
+
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  render();
+}
+
+// ============================================================
+// Tabs
+// ============================================================
+function buildTabs() {
+  const container = document.getElementById("workflow-tabs");
+  container.innerHTML = "";
+
+  // "All" tab
+  const allBtn = makeTabBtn("all", "All workflows", ACTIVE_WF_ID === null);
+  container.appendChild(allBtn);
+
+  const workflows = Object.values(RAW_DATA.workflows || {});
+  workflows.sort((a, b) => a.name.localeCompare(b.name));
+  workflows.forEach(wf => {
+    const btn = makeTabBtn(wf.id, wf.name, ACTIVE_WF_ID === wf.id);
+    container.appendChild(btn);
+  });
+}
+
+function makeTabBtn(id, label, active) {
+  const btn = document.createElement("button");
+  btn.className = "tab-btn" + (active ? " active" : "");
+  btn.textContent = label;
+  btn.dataset.id = id;
+  btn.addEventListener("click", () => {
+    ACTIVE_WF_ID = id === "all" ? null : id;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.id === id));
+    render();
+  });
+  return btn;
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function bindControls() {
+  document.getElementById("range-select").addEventListener("change", e => {
+    RANGE_DAYS = parseInt(e.target.value, 10);
+    render();
+  });
+}
+
+// ============================================================
+// Render – orchestrator
+// ============================================================
+function render() {
+  const cutoff = cutoffDate(RANGE_DAYS);
+  const workflows = getWorkflows();
+  const runs = getFilteredRuns(workflows, cutoff);
+
+  renderSummaryCards(runs, workflows);
+  renderTimeSeriesChart(workflows, cutoff);
+  renderOutcomeChart(runs, cutoff);
+  renderAvgDurationChart(workflows, cutoff);
+}
+
+function getWorkflows() {
+  const all = Object.values(RAW_DATA.workflows || {});
+  if (ACTIVE_WF_ID === null) return all;
+  return all.filter(w => String(w.id) === String(ACTIVE_WF_ID));
+}
+
+function getFilteredRuns(workflows, cutoff) {
+  return workflows.flatMap(w => filterByRange(w.runs || [], cutoff));
+}
+
+// ============================================================
+// Summary cards
+// ============================================================
+function renderSummaryCards(runs, workflows) {
+  const total = runs.length;
+  const successes  = runs.filter(r => r.conclusion === "success").length;
+  const failures   = runs.filter(r => r.conclusion === "failure").length;
+  const cancelled  = runs.filter(r => r.conclusion === "cancelled").length;
+  const durations  = runs.map(r => r.duration_seconds).filter(d => d != null);
+  const avgMins    = durations.length ? (durations.reduce((a, b) => a + b, 0) / durations.length / 60) : null;
+
+  const cards = [
+    { label: "Total runs",      value: total,                   cls: "neutral" },
+    { label: "Successful",      value: successes,               cls: "success" },
+    { label: "Failed",          value: failures,                cls: "failure" },
+    { label: "Cancelled",       value: cancelled,               cls: "cancelled" },
+    { label: "Avg duration",    value: avgMins != null ? `${avgMins.toFixed(1)}m` : "—", cls: "neutral" },
+    { label: "Workflows",       value: workflows.length,        cls: "neutral" },
+  ];
+
+  const container = document.getElementById("summary-cards");
+  container.innerHTML = cards.map(c => `
+    <div class="card ${c.cls}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+    </div>
+  `).join("");
+}
+
+// ============================================================
+// Successful run duration trend (line chart, daily avg)
+// ============================================================
+function renderTimeSeriesChart(workflows, cutoff) {
+  const traces = [];
+
+  workflows.forEach(wf => {
+    const runs = filterByRange(wf.runs || [], cutoff)
+      .filter(r => r.conclusion === "success" && r.started_at && r.duration_seconds != null);
+
+    if (!runs.length) return;
+
+    // Aggregate by calendar day
+    const byDay = {};
+    runs.forEach(r => {
+      const day = r.started_at.slice(0, 10);
+      if (!byDay[day]) byDay[day] = { total: 0, count: 0 };
+      byDay[day].total += r.duration_seconds;
+      byDay[day].count += 1;
+    });
+
+    const days = Object.keys(byDay).sort();
+    const avgMins = days.map(d => toMins(byDay[d].total / byDay[d].count));
+    const counts  = days.map(d => byDay[d].count);
+
+    traces.push({
+      type: "scatter",
+      mode: "lines+markers",
+      name: wf.name,
+      x: days,
+      y: avgMins,
+      connectgaps: false,
+      text: days.map((d, i) =>
+        `<b>${wf.name}</b><br>` +
+        `Date: ${d}<br>` +
+        `Avg duration: ${fmtDuration(Math.round(byDay[d].total / byDay[d].count))}<br>` +
+        `Successful runs: ${counts[i]}`
+      ),
+      hoverinfo: "text",
+      marker: { size: 5 },
+      line:   { width: 2 },
+    });
+  });
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, title: "Duration (minutes)" },
+  };
+  Plotly.react("ts-chart", traces, layout, { responsive: true, displayModeBar: false });
+}
+
+// ============================================================
+// Outcome (stacked bar) chart
+// ============================================================
+function renderOutcomeChart(allRuns, cutoff) {
+  const conclusions = ["success", "failure", "cancelled", "skipped", "timed_out", "in_progress"];
+  const dayConclusion = {};
+
+  allRuns.filter(r => r.started_at).forEach(r => {
+    const day = r.started_at.slice(0, 10);
+    if (!dayConclusion[day]) dayConclusion[day] = {};
+    const c = r.conclusion || "in_progress";
+    dayConclusion[day][c] = (dayConclusion[day][c] || 0) + 1;
+  });
+
+  const days = Object.keys(dayConclusion).sort();
+
+  const traces = conclusions
+    .map(c => ({
+      type: "bar",
+      name: c,
+      x: days,
+      y: days.map(d => dayConclusion[d][c] || 0),
+      marker: { color: conclusionColor(c) },
+    }))
+    .filter(t => t.y.some(v => v > 0));
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    barmode: "stack",
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, title: "Runs" },
+    bargap: 0.15,
+  };
+  Plotly.react("outcome-chart", traces, layout, { responsive: true, displayModeBar: false });
+}
+
+// ============================================================
+// Average duration bar chart
+// ============================================================
+function renderAvgDurationChart(workflows, cutoff) {
+  const names = [];
+  const avgs  = [];
+  const colors = [];
+
+  workflows
+    .slice()
+    .sort((a, b) => {
+      const aRuns = filterByRange(a.runs || [], cutoff).filter(r => r.duration_seconds != null);
+      const bRuns = filterByRange(b.runs || [], cutoff).filter(r => r.duration_seconds != null);
+      const aAvg = aRuns.length ? aRuns.reduce((s, r) => s + r.duration_seconds, 0) / aRuns.length : 0;
+      const bAvg = bRuns.length ? bRuns.reduce((s, r) => s + r.duration_seconds, 0) / bRuns.length : 0;
+      return bAvg - aAvg;
+    })
+    .forEach(wf => {
+      const runs = filterByRange(wf.runs || [], cutoff).filter(r => r.duration_seconds != null);
+      if (!runs.length) return;
+      const avg = runs.reduce((s, r) => s + r.duration_seconds, 0) / runs.length;
+      names.push(wf.name);
+      avgs.push(toMins(avg));
+      colors.push("#58a6ff");
+    });
+
+  const traces = [{
+    type: "bar",
+    orientation: "h",
+    x: avgs,
+    y: names,
+    marker: { color: colors },
+    hovertemplate: "%{y}<br>Avg: %{x:.2f} min<extra></extra>",
+  }];
+
+  const layout = {
+    ...PLOTLY_LAYOUT_BASE,
+    margin: { ...PLOTLY_LAYOUT_BASE.margin, l: Math.min(300, Math.max(...names.map(n => n.length)) * 7) },
+    xaxis: { ...PLOTLY_LAYOUT_BASE.xaxis, title: "Average duration (minutes)" },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, automargin: true },
+  };
+  Plotly.react("avg-chart", traces, layout, { responsive: true, displayModeBar: false });
+}
+
+// ============================================================
+// Start
+// ============================================================
+init();
+</script>
+</body>
+</html>
