@@ -240,7 +240,7 @@
     <!-- Duration time-series chart -->
     <div class="chart-section" id="ts-section">
       <h2>Successful run duration trend</h2>
-      <p class="chart-subtitle">Daily average duration of successful runs (minutes)</p>
+      <p class="chart-subtitle" id="ts-subtitle">Daily average duration of successful runs (minutes)</p>
       <div class="chart-wrapper">
         <div id="ts-chart"></div>
       </div>
@@ -256,7 +256,7 @@
     </div>
 
     <!-- Average duration bar chart -->
-    <div class="chart-section">
+    <div class="chart-section" id="avg-section">
       <h2>Average duration by workflow</h2>
       <p class="chart-subtitle">Mean run duration (minutes) across all selected workflows</p>
       <div class="chart-wrapper">
@@ -322,6 +322,50 @@ let RAW_DATA = null;       // full parsed JSON
 let ACTIVE_WF_ID = null;   // currently selected workflow id (null = "All")
 let RANGE_DAYS = 90;
 
+// Slugify a workflow name for use as a URL hash fragment.
+// e.g. "CI / Build" → "ci--build", "Tests" → "tests"
+function slugify(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Build a map of slug → workflow id from the loaded data.
+function buildSlugMap() {
+  const map = { all: "all" };
+  Object.values(RAW_DATA.workflows || {}).forEach(wf => {
+    map[slugify(wf.name)] = String(wf.id);
+  });
+  return map;
+}
+
+// Switch the active tab by slug, update hash, and re-render.
+// skipRender is used during init to avoid a double render.
+function selectTab(slug, { pushHistory = false, skipRender = false } = {}) {
+  const slugMap = buildSlugMap();
+  const targetId = slugMap[slug] ?? "all";
+
+  ACTIVE_WF_ID = targetId === "all" ? null : targetId;
+
+  // Sync active class on all tab buttons
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.slug === slug || (slug === "all" && b.dataset.id === "all"));
+  });
+
+  // Keep the URL in sync without polluting browser history
+  const newHash = "#" + slug;
+  if (location.hash !== newHash) {
+    if (pushHistory) {
+      history.pushState(null, "", newHash);
+    } else {
+      history.replaceState(null, "", newHash);
+    }
+  }
+
+  if (!skipRender) render();
+}
+
 // ============================================================
 // Boot
 // ============================================================
@@ -359,6 +403,16 @@ async function init() {
   document.getElementById("loading").style.display = "none";
   document.getElementById("app").style.display = "block";
 
+  // Apply hash from URL before first render (deep-link support)
+  const initialSlug = location.hash.replace(/^#/, "") || "all";
+  selectTab(initialSlug, { skipRender: true });
+
+  // Keep tabs in sync with browser back/forward
+  window.addEventListener("popstate", () => {
+    const slug = location.hash.replace(/^#/, "") || "all";
+    selectTab(slug);
+  });
+
   render();
 }
 
@@ -370,26 +424,24 @@ function buildTabs() {
   container.innerHTML = "";
 
   // "All" tab
-  const allBtn = makeTabBtn("all", "All workflows", ACTIVE_WF_ID === null);
-  container.appendChild(allBtn);
+  container.appendChild(makeTabBtn("all", "all", "All workflows", ACTIVE_WF_ID === null));
 
   const workflows = Object.values(RAW_DATA.workflows || {});
   workflows.sort((a, b) => a.name.localeCompare(b.name));
   workflows.forEach(wf => {
-    const btn = makeTabBtn(wf.id, wf.name, ACTIVE_WF_ID === wf.id);
-    container.appendChild(btn);
+    const slug = slugify(wf.name);
+    container.appendChild(makeTabBtn(String(wf.id), slug, wf.name, ACTIVE_WF_ID === String(wf.id)));
   });
 }
 
-function makeTabBtn(id, label, active) {
+function makeTabBtn(id, slug, label, active) {
   const btn = document.createElement("button");
   btn.className = "tab-btn" + (active ? " active" : "");
   btn.textContent = label;
-  btn.dataset.id = id;
+  btn.dataset.id   = id;
+  btn.dataset.slug = slug;
   btn.addEventListener("click", () => {
-    ACTIVE_WF_ID = id === "all" ? null : id;
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.id === id));
-    render();
+    selectTab(slug, { pushHistory: true });
   });
   return btn;
 }
@@ -415,7 +467,14 @@ function render() {
   renderSummaryCards(runs, workflows);
   renderTimeSeriesChart(workflows, cutoff);
   renderOutcomeChart(runs, cutoff);
-  renderAvgDurationChart(workflows, cutoff);
+
+  const avgSection = document.getElementById("avg-section");
+  if (ACTIVE_WF_ID !== null) {
+    avgSection.style.display = "none";
+  } else {
+    avgSection.style.display = "";
+    renderAvgDurationChart(workflows, cutoff);
+  }
 }
 
 function getWorkflows() {
@@ -460,52 +519,133 @@ function renderSummaryCards(runs, workflows) {
 // ============================================================
 // Successful run duration trend (line chart, daily avg)
 // ============================================================
+
+// Palette for skipped-job sub-categories (up to 8 distinct counts).
+// Index 0 = 0 skipped (full run), 1 = 1 skipped, etc.
+const SKIPPED_PALETTE = [
+  "#58a6ff", // 0 skipped – blue
+  "#3fb950", // 1 skipped – green
+  "#e3b341", // 2 skipped – yellow
+  "#f85149", // 3 skipped – red
+  "#bc8cff", // 4 skipped – purple
+  "#79c0ff", // 5 skipped – light blue
+  "#56d364", // 6 skipped – light green
+  "#ffa657", // 7 skipped – orange
+];
+
+function skippedColor(n) {
+  return SKIPPED_PALETTE[n] ?? SKIPPED_PALETTE[SKIPPED_PALETTE.length - 1];
+}
+
 function renderTimeSeriesChart(workflows, cutoff) {
   const traces = [];
 
-  workflows.forEach(wf => {
-    const runs = filterByRange(wf.runs || [], cutoff)
-      .filter(r => r.conclusion === "success" && r.started_at && r.duration_seconds != null);
+  // Determine whether we should split by skipped_jobs sub-categories.
+  // We do this only when a single workflow is selected AND at least one of its
+  // successful runs has a non-null skipped_jobs value.
+  const singleWorkflow = ACTIVE_WF_ID !== null && workflows.length === 1;
+  const successRuns = workflows.flatMap(wf =>
+    filterByRange(wf.runs || [], cutoff)
+      .filter(r => r.conclusion === "success" && r.started_at && r.duration_seconds != null)
+  );
+  const hasSkippedData = successRuns.some(r => r.skipped_jobs != null);
+  const splitBySkipped = singleWorkflow && hasSkippedData;
 
-    if (!runs.length) return;
-
-    // Aggregate by calendar day
-    const byDay = {};
-    runs.forEach(r => {
-      const day = r.started_at.slice(0, 10);
-      if (!byDay[day]) byDay[day] = { total: 0, count: 0 };
-      byDay[day].total += r.duration_seconds;
-      byDay[day].count += 1;
+  if (splitBySkipped) {
+    // Group runs by skipped_jobs count, treating null as a separate "unknown" bucket.
+    const groups = {};
+    successRuns.forEach(r => {
+      const key = r.skipped_jobs != null ? r.skipped_jobs : "?";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
     });
 
-    const days = Object.keys(byDay).sort();
-    const avgMins = days.map(d => toMins(byDay[d].total / byDay[d].count));
-    const counts  = days.map(d => byDay[d].count);
-
-    traces.push({
-      type: "scatter",
-      mode: "lines+markers",
-      name: wf.name,
-      x: days,
-      y: avgMins,
-      connectgaps: false,
-      text: days.map((d, i) =>
-        `<b>${wf.name}</b><br>` +
-        `Date: ${d}<br>` +
-        `Avg duration: ${fmtDuration(Math.round(byDay[d].total / byDay[d].count))}<br>` +
-        `Successful runs: ${counts[i]}`
-      ),
-      hoverinfo: "text",
-      marker: { size: 5 },
-      line:   { width: 2 },
+    // Sort group keys: numeric ones ascending, then "?" last.
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === "?") return 1;
+      if (b === "?") return -1;
+      return Number(a) - Number(b);
     });
-  });
+
+    sortedKeys.forEach(key => {
+      const runs = groups[key];
+      const byDay = {};
+      runs.forEach(r => {
+        const day = r.started_at.slice(0, 10);
+        if (!byDay[day]) byDay[day] = { total: 0, count: 0 };
+        byDay[day].total += r.duration_seconds;
+        byDay[day].count += 1;
+      });
+
+      const days = Object.keys(byDay).sort();
+      const label = key === "?" ? "skipped: unknown" : `${key} job${key === 1 ? "" : "s"} skipped`;
+      const color = key === "?" ? "#8b949e" : skippedColor(Number(key));
+
+      traces.push({
+        type: "scatter",
+        mode: "lines+markers",
+        name: label,
+        x: days,
+        y: days.map(d => toMins(byDay[d].total / byDay[d].count)),
+        connectgaps: false,
+        text: days.map(d =>
+          `<b>${label}</b><br>` +
+          `Date: ${d}<br>` +
+          `Avg duration: ${fmtDuration(Math.round(byDay[d].total / byDay[d].count))}<br>` +
+          `Successful runs: ${byDay[d].count}`
+        ),
+        hoverinfo: "text",
+        marker: { size: 5, color },
+        line:   { width: 2, color },
+      });
+    });
+  } else {
+    // Default: one line per workflow (existing behaviour).
+    workflows.forEach(wf => {
+      const runs = filterByRange(wf.runs || [], cutoff)
+        .filter(r => r.conclusion === "success" && r.started_at && r.duration_seconds != null);
+
+      if (!runs.length) return;
+
+      const byDay = {};
+      runs.forEach(r => {
+        const day = r.started_at.slice(0, 10);
+        if (!byDay[day]) byDay[day] = { total: 0, count: 0 };
+        byDay[day].total += r.duration_seconds;
+        byDay[day].count += 1;
+      });
+
+      const days = Object.keys(byDay).sort();
+
+      traces.push({
+        type: "scatter",
+        mode: "lines+markers",
+        name: wf.name,
+        x: days,
+        y: days.map(d => toMins(byDay[d].total / byDay[d].count)),
+        connectgaps: false,
+        text: days.map(d =>
+          `<b>${wf.name}</b><br>` +
+          `Date: ${d}<br>` +
+          `Avg duration: ${fmtDuration(Math.round(byDay[d].total / byDay[d].count))}<br>` +
+          `Successful runs: ${byDay[d].count}`
+        ),
+        hoverinfo: "text",
+        marker: { size: 5 },
+        line:   { width: 2 },
+      });
+    });
+  }
 
   const layout = {
     ...PLOTLY_LAYOUT_BASE,
     yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, title: "Duration (minutes)" },
   };
   Plotly.react("ts-chart", traces, layout, { responsive: true, displayModeBar: false });
+
+  document.getElementById("ts-subtitle").textContent = splitBySkipped
+    ? "Lines split by number of skipped jobs — each line is a distinct run configuration"
+    : "Daily average duration of successful runs (minutes)";
 }
 
 // ============================================================

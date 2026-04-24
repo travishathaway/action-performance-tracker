@@ -20,6 +20,7 @@ Environment variables (set by the workflow):
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import sys
@@ -27,7 +28,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -41,10 +42,13 @@ except ModuleNotFoundError:
 # Helpers
 # ---------------------------------------------------------------------------
 
-# Maximum number of times to retry a single request after a rate-limit response.
+# Maximum number of times to retry a single request after a rate-limit response
+# or a transient network error.
 _MAX_RETRIES = 8
 # Floor sleep between retries when no backoff header is present (seconds).
 _RETRY_BACKOFF_BASE = 60
+# Initial backoff for transient network errors (seconds); doubles each attempt.
+_NETWORK_BACKOFF_BASE = 5
 
 
 def _backoff_seconds(exc: HTTPError) -> float:
@@ -101,20 +105,29 @@ def _github_request(url: str, token: str) -> Any:
     """
     Make an authenticated GET request to the GitHub REST API and return parsed JSON.
 
-    Retries automatically on rate-limit responses (HTTP 429 or secondary 403),
-    sleeping for the duration indicated by the response headers before each retry.
-    Raises ``HTTPError`` for any other non-2xx status after exhausting retries.
+    Retries automatically on:
+      - Rate-limit responses (HTTP 429 or secondary 403): sleeps until the
+        reset time indicated by response headers.
+      - Transient network errors (timeouts, SSL handshake failures, connection
+        resets, etc.): retries with exponential backoff starting at
+        _NETWORK_BACKOFF_BASE seconds.
+
+    Raises the underlying exception if all retries are exhausted or if the
+    error is a non-retryable HTTP error (4xx other than rate limits, 5xx, …).
     """
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
+    network_backoff = _NETWORK_BACKOFF_BASE
+
     for attempt in range(1, _MAX_RETRIES + 1):
         req = Request(url, headers=headers)
         try:
             with urlopen(req, timeout=30) as resp:
                 return json.loads(resp.read().decode())
+
         except HTTPError as exc:
             if _is_rate_limited(exc):
                 wait = _backoff_seconds(exc)
@@ -126,8 +139,25 @@ def _github_request(url: str, token: str) -> Any:
                 )
                 time.sleep(wait)
                 continue  # retry
-            raise  # non-rate-limit error — let the caller decide
-    # If we exhausted all retries, make one final attempt and let it raise naturally.
+            raise  # non-rate-limit HTTP error — let the caller decide
+
+        except (URLError, OSError, http.client.HTTPException) as exc:
+            # Covers: timeouts, SSL handshake failures, connection resets,
+            # DNS failures, and any other transport-level error, as well as
+            # http.client exceptions such as IncompleteRead, RemoteDisconnected,
+            # and BadStatusLine that are raised mid-response.
+            if attempt == _MAX_RETRIES:
+                raise  # out of retries — propagate to caller
+            print(
+                f"  Network error on attempt {attempt}/{_MAX_RETRIES}: {exc}. "
+                f"Retrying in {network_backoff}s …",
+                flush=True,
+            )
+            time.sleep(network_backoff)
+            network_backoff = min(network_backoff * 2, 300)  # cap at 5 minutes
+            continue
+
+    # Exhausted retries on rate-limit path — one final attempt, let it raise.
     req = Request(url, headers=headers)
     with urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode())
@@ -218,7 +248,20 @@ def _run_to_record(run: dict) -> dict:
         "html_url": run.get("html_url"),
         "head_branch": run.get("head_branch"),
         "head_sha": run.get("head_sha"),
+        # Populated later for successful runs via _fetch_skipped_jobs_count().
+        # None means "not yet fetched"; 0 means "fetched, none skipped".
+        "skipped_jobs": None,
     }
+
+
+def _fetch_skipped_jobs_count(run_id: int, base_api: str, token: str) -> int:
+    """
+    Return the number of jobs with conclusion == 'skipped' for a workflow run.
+
+    Uses _paginate so rate-limit retries are handled transparently.
+    """
+    jobs = _paginate(f"{base_api}/actions/runs/{run_id}/jobs", token)
+    return sum(1 for j in jobs if j.get("conclusion") == "skipped")
 
 
 def collect(config: dict, existing: dict, token: str, data_path: Path) -> dict:
@@ -340,6 +383,30 @@ def collect(config: dict, existing: dict, token: str, data_path: Path) -> dict:
 
         # New / updated records overwrite old ones; keep the rest
         merged = {**existing_runs_by_id, **new_runs_by_id}
+
+        # --- Fetch skipped-job counts for successful runs that need it -------
+        # A run needs fetching when: conclusion is "success" AND skipped_jobs
+        # is None (i.e. never fetched, including runs just converted from raw).
+        needs_job_fetch = [
+            r for r in merged.values()
+            if r.get("conclusion") == "success" and r.get("skipped_jobs") is None
+        ]
+        if needs_job_fetch:
+            print(
+                f"    Fetching job details for {len(needs_job_fetch)} successful run(s) …",
+                flush=True,
+            )
+        for run_record in needs_job_fetch:
+            try:
+                count = _fetch_skipped_jobs_count(run_record["id"], base_api, token)
+                merged[run_record["id"]]["skipped_jobs"] = count
+            except HTTPError as exc:
+                # Non-fatal: leave skipped_jobs as None; it will be retried next run.
+                print(
+                    f"    WARNING: Could not fetch jobs for run {run_record['id']} "
+                    f"(HTTP {exc.code}) – will retry next collection.",
+                    file=sys.stderr,
+                )
 
         # Sort by started_at ascending
         sorted_runs = sorted(
