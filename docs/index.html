@@ -148,6 +148,10 @@
     .chart-section .chart-subtitle {
       font-size: 0.8rem;
       color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .ts-controls {
       margin-bottom: 12px;
     }
 
@@ -241,6 +245,20 @@
     <div class="chart-section" id="ts-section">
       <h2>Successful run duration trend</h2>
       <p class="chart-subtitle" id="ts-subtitle">Daily average duration of successful runs (minutes)</p>
+      <div class="controls ts-controls">
+        <label for="ts-smoothing">Smoothing:</label>
+        <select id="ts-smoothing">
+          <option value="0" selected>None</option>
+          <option value="3">3-day rolling avg</option>
+          <option value="7">7-day rolling avg</option>
+          <option value="14">14-day rolling avg</option>
+        </select>
+        <label for="ts-bands">Percentile bands:</label>
+        <select id="ts-bands">
+          <option value="0" selected>Off</option>
+          <option value="1">P25–P75</option>
+        </select>
+      </div>
       <div class="chart-wrapper">
         <div id="ts-chart"></div>
       </div>
@@ -321,6 +339,8 @@ function filterByRange(runs, cutoff) {
 let RAW_DATA = null;       // full parsed JSON
 let ACTIVE_WF_ID = null;   // currently selected workflow id (null = "All")
 let RANGE_DAYS = 90;
+let TS_SMOOTHING   = 0;      // rolling window in days (0 = off)
+let TS_BANDS       = false;  // show P25–P75 percentile bands
 
 // Slugify a workflow name for use as a URL hash fragment.
 // e.g. "CI / Build" → "ci--build", "Tests" → "tests"
@@ -454,6 +474,14 @@ function bindControls() {
     RANGE_DAYS = parseInt(e.target.value, 10);
     render();
   });
+  document.getElementById("ts-smoothing").addEventListener("change", e => {
+    TS_SMOOTHING = parseInt(e.target.value, 10);
+    render();
+  });
+  document.getElementById("ts-bands").addEventListener("change", e => {
+    TS_BANDS = e.target.value === "1";
+    render();
+  });
 }
 
 // ============================================================
@@ -537,7 +565,130 @@ function skippedColor(n) {
   return SKIPPED_PALETTE[n] ?? SKIPPED_PALETTE[SKIPPED_PALETTE.length - 1];
 }
 
+// Aggregate runs into buckets keyed by day.
+// Returns sorted array of { key, values: [duration_seconds, …] }.
+function aggregateBuckets(runs) {
+  const buckets = {};
+  runs.forEach(r => {
+    const key = r.started_at.slice(0, 10);
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(r.duration_seconds);
+  });
+  return Object.keys(buckets).sort().map(k => ({ key: k, values: buckets[k] }));
+}
+
+// Compute mean of an array of numbers.
+function mean(arr) {
+  return arr.reduce((s, v) => s + v, 0) / arr.length;
+}
+
+// Compute a percentile (0–100) of a sorted array.
+function percentile(sorted, p) {
+  if (!sorted.length) return null;
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+// Apply a rolling average over a sequence of {key, avg} objects.
+// windowDays is the look-back window in days; works on calendar days by
+// accumulating all raw values that fall within the window, not just N points.
+function rollingAvg(buckets, windowDays) {
+  if (!windowDays || windowDays <= 1) return buckets.map(b => ({ ...b, smoothed: b.avg }));
+  return buckets.map((b, i) => {
+    const cutoffKey = b.key; // always a "YYYY-MM-DD" or "YYYY-Www"
+    // For rolling purposes we use the last `windowDays` buckets (inclusive).
+    const start = Math.max(0, i - windowDays + 1);
+    const window = buckets.slice(start, i + 1);
+    const all = window.flatMap(w => w.values);
+    return { ...b, smoothed: all.length ? mean(all) : null };
+  });
+}
+
+// Build the traces (and optional band traces) for a single group of runs.
+// Returns an array of Plotly trace objects.
+function buildTraces(runs, label, color, smoothingDays, showBands) {
+  const buckets = aggregateBuckets(runs);
+  if (!buckets.length) return [];
+
+  // Compute per-bucket stats.
+  const stats = buckets.map(b => {
+    const sorted = [...b.values].sort((a, z) => a - z);
+    return {
+      key: b.key,
+      values: b.values,
+      avg: mean(b.values),
+      count: b.values.length,
+      p25: percentile(sorted, 25),
+      p75: percentile(sorted, 75),
+    };
+  });
+
+  // Apply rolling average if requested.
+  const withSmoothing = rollingAvg(stats, smoothingDays);
+
+  const xs = withSmoothing.map(s => s.key);
+  const ys = withSmoothing.map(s => toMins(s.smoothed));
+  const texts = withSmoothing.map(s => {
+    const base = smoothingDays > 0
+      ? `<b>${label}</b><br>Period: ${s.key}<br>Rolling avg (${smoothingDays}-day): ${fmtDuration(Math.round(s.smoothed))}`
+      : `<b>${label}</b><br>Period: ${s.key}<br>Avg duration: ${fmtDuration(Math.round(s.avg))}`;
+    return base + `<br>Runs in period: ${s.count}`;
+  });
+
+  const traces = [];
+
+  if (showBands) {
+    const p25y = stats.map(s => toMins(s.p25));
+    const p75y = stats.map(s => toMins(s.p75));
+    const bandColor = color || "#58a6ff";
+    // Shaded area: upper boundary then reversed lower boundary to close the polygon.
+    traces.push({
+      type: "scatter",
+      mode: "lines",
+      name: `${label} (P25–P75)`,
+      x: [...xs, ...xs.slice().reverse()],
+      y: [...p75y, ...p25y.slice().reverse()],
+      fill: "toself",
+      fillcolor: hexToRgba(bandColor, 0.15),
+      line: { width: 0, color: "transparent" },
+      hoverinfo: "skip",
+      showlegend: false,
+    });
+  }
+
+  const mainTrace = {
+    type: "scatter",
+    mode: "lines+markers",
+    name: label,
+    x: xs,
+    y: ys,
+    connectgaps: false,
+    text: texts,
+    hoverinfo: "text",
+    marker: { size: 5 },
+    line: { width: 2 },
+  };
+  if (color) {
+    mainTrace.marker.color = color;
+    mainTrace.line.color   = color;
+  }
+  traces.push(mainTrace);
+
+  return traces;
+}
+
+// Convert a hex colour like "#58a6ff" to rgba(r,g,b,alpha).
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function renderTimeSeriesChart(workflows, cutoff) {
+  const smoothingDays = TS_SMOOTHING;
+  const showBands    = TS_BANDS;
   const traces = [];
 
   // Determine whether we should split by skipped_jobs sub-categories.
@@ -568,72 +719,19 @@ function renderTimeSeriesChart(workflows, cutoff) {
     });
 
     sortedKeys.forEach(key => {
-      const runs = groups[key];
-      const byDay = {};
-      runs.forEach(r => {
-        const day = r.started_at.slice(0, 10);
-        if (!byDay[day]) byDay[day] = { total: 0, count: 0 };
-        byDay[day].total += r.duration_seconds;
-        byDay[day].count += 1;
-      });
-
-      const days = Object.keys(byDay).sort();
       const label = key === "?" ? "skipped: unknown" : `${key} job${key === 1 ? "" : "s"} skipped`;
       const color = key === "?" ? "#8b949e" : skippedColor(Number(key));
-
-      traces.push({
-        type: "scatter",
-        mode: "lines+markers",
-        name: label,
-        x: days,
-        y: days.map(d => toMins(byDay[d].total / byDay[d].count)),
-        connectgaps: false,
-        text: days.map(d =>
-          `<b>${label}</b><br>` +
-          `Date: ${d}<br>` +
-          `Avg duration: ${fmtDuration(Math.round(byDay[d].total / byDay[d].count))}<br>` +
-          `Successful runs: ${byDay[d].count}`
-        ),
-        hoverinfo: "text",
-        marker: { size: 5, color },
-        line:   { width: 2, color },
-      });
+      buildTraces(groups[key], label, color, smoothingDays, showBands)
+        .forEach(t => traces.push(t));
     });
   } else {
-    // Default: one line per workflow (existing behaviour).
+    // Default: one line per workflow.
     workflows.forEach(wf => {
       const runs = filterByRange(wf.runs || [], cutoff)
         .filter(r => r.conclusion === "success" && r.started_at && r.duration_seconds != null);
-
       if (!runs.length) return;
-
-      const byDay = {};
-      runs.forEach(r => {
-        const day = r.started_at.slice(0, 10);
-        if (!byDay[day]) byDay[day] = { total: 0, count: 0 };
-        byDay[day].total += r.duration_seconds;
-        byDay[day].count += 1;
-      });
-
-      const days = Object.keys(byDay).sort();
-
-      traces.push({
-        type: "scatter",
-        mode: "lines+markers",
-        name: wf.name,
-        x: days,
-        y: days.map(d => toMins(byDay[d].total / byDay[d].count)),
-        connectgaps: false,
-        text: days.map(d =>
-          `<b>${wf.name}</b><br>` +
-          `Date: ${d}<br>` +
-          `Avg duration: ${fmtDuration(Math.round(byDay[d].total / byDay[d].count))}<br>` +
-          `Successful runs: ${byDay[d].count}`
-        ),
-        hoverinfo: "text",
-        marker: { size: 5 },
-        line:   { width: 2 },
-      });
+      buildTraces(runs, wf.name, null, smoothingDays, showBands)
+        .forEach(t => traces.push(t));
     });
   }
 
@@ -643,9 +741,13 @@ function renderTimeSeriesChart(workflows, cutoff) {
   };
   Plotly.react("ts-chart", traces, layout, { responsive: true, displayModeBar: false });
 
-  document.getElementById("ts-subtitle").textContent = splitBySkipped
-    ? "Lines split by number of skipped jobs — each line is a distinct run configuration"
+  // Update subtitle to reflect active controls.
+  const smoothLabel = smoothingDays > 0 ? `, ${smoothingDays}-day rolling avg` : "";
+  const bandsLabel  = showBands ? ", P25–P75 bands" : "";
+  const baseLabel   = splitBySkipped
+    ? "Split by skipped jobs"
     : "Daily average duration of successful runs (minutes)";
+  document.getElementById("ts-subtitle").textContent = baseLabel + smoothLabel + bandsLabel;
 }
 
 // ============================================================
