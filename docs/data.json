@@ -4,7 +4,7 @@
     "repo": "conda",
     "title": "GitHub Actions Performance Tracker",
     "description": "Monitor the duration and success rate of GitHub Actions workflows over time.",
-    "last_updated": "2026-06-27T03:00:53Z"
+    "last_updated": "2026-06-28T03:01:44Z"
   },
   "workflows": {
     "12042738": {
@@ -2154,6 +2154,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/28218994767",
           "head_branch": "main",
           "head_sha": "7e46c6627baa694196673e216c2929a17ab55052",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 28279614183,
+          "run_number": 1787,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-06-27T05:15:27Z",
+          "updated_at": "2026-06-27T05:16:12Z",
+          "duration_seconds": 45,
+          "html_url": "https://github.com/conda/conda/actions/runs/28279614183",
+          "head_branch": "main",
+          "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
           "skipped_jobs": 0
         }
       ]
@@ -26717,6 +26731,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/28223155370",
           "head_branch": "main",
           "head_sha": "7e46c6627baa694196673e216c2929a17ab55052",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 28281893912,
+          "run_number": 1586,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-06-27T07:00:11Z",
+          "updated_at": "2026-06-27T07:00:42Z",
+          "duration_seconds": 31,
+          "html_url": "https://github.com/conda/conda/actions/runs/28281893912",
+          "head_branch": "main",
+          "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
           "skipped_jobs": 0
         }
       ]
@@ -96451,6 +96479,20 @@
           "head_branch": "InvalidInstaller",
           "head_sha": "ce33269152691bd529ba45230bb5ead2a81e778c",
           "skipped_jobs": 0
+        },
+        {
+          "id": 28298717268,
+          "run_number": 14697,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-06-27T18:59:14Z",
+          "updated_at": "2026-06-27T20:50:50Z",
+          "duration_seconds": 6696,
+          "html_url": "https://github.com/conda/conda/actions/runs/28298717268",
+          "head_branch": "main",
+          "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
+          "skipped_jobs": null
         }
       ]
     },
@@ -113389,6 +113431,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/27972003625",
           "head_branch": "main",
           "head_sha": "3937815a78850266bb12bbb69724cc1d2ddbd3a6",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 28286175728,
+          "run_number": 81,
+          "event": "dynamic",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-06-27T10:11:45Z",
+          "updated_at": "2026-06-27T10:14:34Z",
+          "duration_seconds": 169,
+          "html_url": "https://github.com/conda/conda/actions/runs/28286175728",
+          "head_branch": "main",
+          "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
           "skipped_jobs": 0
         }
       ]
@@ -141769,6 +141825,20 @@
           "head_branch": "main",
           "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
           "skipped_jobs": null
+        },
+        {
+          "id": 28301432420,
+          "run_number": 1984,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-06-27T20:50:52Z",
+          "updated_at": "2026-06-27T20:50:53Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/28301432420",
+          "head_branch": "main",
+          "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
+          "skipped_jobs": null
         }
       ]
     },
@@ -146278,6 +146348,20 @@
           "updated_at": "2026-06-26T23:20:11Z",
           "duration_seconds": 1,
           "html_url": "https://github.com/conda/conda/actions/runs/28270676595",
+          "head_branch": "main",
+          "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
+          "skipped_jobs": null
+        },
+        {
+          "id": 28301432416,
+          "run_number": 314,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-06-27T20:50:52Z",
+          "updated_at": "2026-06-27T20:50:53Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/28301432416",
           "head_branch": "main",
           "head_sha": "407374778dd6f15ccb6a8a372d018d0b0a6b0610",
           "skipped_jobs": null
