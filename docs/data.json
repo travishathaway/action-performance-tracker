@@ -4,7 +4,7 @@
     "repo": "conda",
     "title": "GitHub Actions Performance Tracker",
     "description": "Monitor the duration and success rate of GitHub Actions workflows over time.",
-    "last_updated": "2026-08-05T02:58:42Z"
+    "last_updated": "2026-08-06T02:58:50Z"
   },
   "workflows": {
     "12042738": {
@@ -2700,6 +2700,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/30879343007",
           "head_branch": "main",
           "head_sha": "4b6b3c880d1cb2a5cdb65ee5af03195ca5d9030e",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 30976789215,
+          "run_number": 1826,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T05:00:33Z",
+          "updated_at": "2026-08-05T05:02:10Z",
+          "duration_seconds": 97,
+          "html_url": "https://github.com/conda/conda/actions/runs/30976789215",
+          "head_branch": "main",
+          "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
           "skipped_jobs": 0
         }
       ]
@@ -30833,6 +30847,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/30885286116",
           "head_branch": "main",
           "head_sha": "4b6b3c880d1cb2a5cdb65ee5af03195ca5d9030e",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 30982671662,
+          "run_number": 1625,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T06:49:08Z",
+          "updated_at": "2026-08-05T06:49:28Z",
+          "duration_seconds": 20,
+          "html_url": "https://github.com/conda/conda/actions/runs/30982671662",
+          "head_branch": "main",
+          "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
           "skipped_jobs": 0
         }
       ]
@@ -73627,6 +73655,62 @@
           "head_branch": "main",
           "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
           "skipped_jobs": null
+        },
+        {
+          "id": 31009240708,
+          "run_number": 27692,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T13:14:07Z",
+          "updated_at": "2026-08-05T13:14:24Z",
+          "duration_seconds": 17,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009240708",
+          "head_branch": "skip-monolithic-fallback",
+          "head_sha": "163c692578fb104a60c6e344a18794ea5512d46b",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 31009591835,
+          "run_number": 27693,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T13:18:36Z",
+          "updated_at": "2026-08-05T13:19:04Z",
+          "duration_seconds": 28,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009591835",
+          "head_branch": "fix/deprecation-handler-packaging-26.3",
+          "head_sha": "d1f8f81274948fe5d09e0306d6f4f5f75aca46d7",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 31009746499,
+          "run_number": 27694,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T13:20:37Z",
+          "updated_at": "2026-08-05T13:23:21Z",
+          "duration_seconds": 164,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009746499",
+          "head_branch": "fix/deprecation-handler-packaging-26.3",
+          "head_sha": "784525571e7219b52842165207c397897d61c766",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 31022400619,
+          "run_number": 27695,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T15:51:27Z",
+          "updated_at": "2026-08-05T15:51:42Z",
+          "duration_seconds": 15,
+          "html_url": "https://github.com/conda/conda/actions/runs/31022400619",
+          "head_branch": "skip-monolithic-fallback",
+          "head_sha": "71a908fb70593edcba15f17537fc0c8dab20b1dd",
+          "skipped_jobs": 0
         }
       ]
     },
@@ -81475,6 +81559,34 @@
           "html_url": "https://github.com/conda/conda/actions/runs/30933240866",
           "head_branch": "fix-plantuml",
           "head_sha": "b5971bcd4da28604049b4839e21a2424cf33bce6",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 31009240709,
+          "run_number": 4700,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T13:14:07Z",
+          "updated_at": "2026-08-05T13:14:23Z",
+          "duration_seconds": 16,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009240709",
+          "head_branch": "skip-monolithic-fallback",
+          "head_sha": "163c692578fb104a60c6e344a18794ea5512d46b",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 31009592018,
+          "run_number": 4701,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T13:18:36Z",
+          "updated_at": "2026-08-05T13:19:08Z",
+          "duration_seconds": 32,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009592018",
+          "head_branch": "fix/deprecation-handler-packaging-26.3",
+          "head_sha": "d1f8f81274948fe5d09e0306d6f4f5f75aca46d7",
           "skipped_jobs": 0
         }
       ]
@@ -117717,6 +117829,90 @@
           "head_branch": "main",
           "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
           "skipped_jobs": 9
+        },
+        {
+          "id": 31009240733,
+          "run_number": 15211,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-08-05T13:14:07Z",
+          "updated_at": "2026-08-05T14:46:34Z",
+          "duration_seconds": 5547,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009240733",
+          "head_branch": "skip-monolithic-fallback",
+          "head_sha": "163c692578fb104a60c6e344a18794ea5512d46b",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31009595548,
+          "run_number": 15212,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "action_required",
+          "started_at": "2026-08-05T13:18:39Z",
+          "updated_at": "2026-08-05T13:18:39Z",
+          "duration_seconds": 0,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009595548",
+          "head_branch": "fix/deprecation-handler-packaging-26.3",
+          "head_sha": "d1f8f81274948fe5d09e0306d6f4f5f75aca46d7",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31009748336,
+          "run_number": 15213,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T14:46:54Z",
+          "updated_at": "2026-08-05T17:20:30Z",
+          "duration_seconds": 9216,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009748336",
+          "head_branch": "fix/deprecation-handler-packaging-26.3",
+          "head_sha": "784525571e7219b52842165207c397897d61c766",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 31019100028,
+          "run_number": 15214,
+          "event": "push",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-08-05T15:12:24Z",
+          "updated_at": "2026-08-05T17:28:48Z",
+          "duration_seconds": 8184,
+          "html_url": "https://github.com/conda/conda/actions/runs/31019100028",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31022403496,
+          "run_number": 15215,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-08-05T15:51:29Z",
+          "updated_at": "2026-08-05T17:32:10Z",
+          "duration_seconds": 6041,
+          "html_url": "https://github.com/conda/conda/actions/runs/31022403496",
+          "head_branch": "skip-monolithic-fallback",
+          "head_sha": "71a908fb70593edcba15f17537fc0c8dab20b1dd",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31037731730,
+          "run_number": 15216,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-08-05T19:04:32Z",
+          "updated_at": "2026-08-05T20:50:37Z",
+          "duration_seconds": 6365,
+          "html_url": "https://github.com/conda/conda/actions/runs/31037731730",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
         }
       ]
     },
@@ -173745,6 +173941,104 @@
           "head_branch": "main",
           "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
           "skipped_jobs": 2
+        },
+        {
+          "id": 31009262901,
+          "run_number": 2717,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T13:14:23Z",
+          "updated_at": "2026-08-05T13:14:33Z",
+          "duration_seconds": 10,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009262901",
+          "head_branch": "skip-monolithic-fallback",
+          "head_sha": "163c692578fb104a60c6e344a18794ea5512d46b",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31009625693,
+          "run_number": 2718,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "action_required",
+          "started_at": "2026-08-05T13:19:03Z",
+          "updated_at": "2026-08-05T13:19:03Z",
+          "duration_seconds": 0,
+          "html_url": "https://github.com/conda/conda/actions/runs/31009625693",
+          "head_branch": "fix/deprecation-handler-packaging-26.3",
+          "head_sha": "d1f8f81274948fe5d09e0306d6f4f5f75aca46d7",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31016915211,
+          "run_number": 2719,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T14:46:36Z",
+          "updated_at": "2026-08-05T14:46:37Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/31016915211",
+          "head_branch": "main",
+          "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31029566869,
+          "run_number": 2720,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T17:20:33Z",
+          "updated_at": "2026-08-05T17:20:35Z",
+          "duration_seconds": 2,
+          "html_url": "https://github.com/conda/conda/actions/runs/31029566869",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31030205485,
+          "run_number": 2721,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T17:28:51Z",
+          "updated_at": "2026-08-05T17:28:52Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/31030205485",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31030472873,
+          "run_number": 2722,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T17:32:13Z",
+          "updated_at": "2026-08-05T17:32:22Z",
+          "duration_seconds": 9,
+          "html_url": "https://github.com/conda/conda/actions/runs/31030472873",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31045991508,
+          "run_number": 2723,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T20:50:39Z",
+          "updated_at": "2026-08-05T20:50:40Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/31045991508",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
         }
       ]
     },
@@ -184892,6 +185186,76 @@
           "html_url": "https://github.com/conda/conda/actions/runs/30956662759",
           "head_branch": "main",
           "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31016915209,
+          "run_number": 786,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-08-05T14:46:36Z",
+          "updated_at": "2026-08-05T14:46:54Z",
+          "duration_seconds": 18,
+          "html_url": "https://github.com/conda/conda/actions/runs/31016915209",
+          "head_branch": "main",
+          "head_sha": "3c31adf22b532b53a18f9db9b776bdc14a5e367a",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31029569181,
+          "run_number": 787,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-08-05T17:20:35Z",
+          "updated_at": "2026-08-05T17:20:55Z",
+          "duration_seconds": 20,
+          "html_url": "https://github.com/conda/conda/actions/runs/31029569181",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": null
+        },
+        {
+          "id": 31030207200,
+          "run_number": 788,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T17:28:52Z",
+          "updated_at": "2026-08-05T17:29:03Z",
+          "duration_seconds": 11,
+          "html_url": "https://github.com/conda/conda/actions/runs/31030207200",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": 1
+        },
+        {
+          "id": 31030473047,
+          "run_number": 789,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-08-05T17:32:13Z",
+          "updated_at": "2026-08-05T17:32:39Z",
+          "duration_seconds": 26,
+          "html_url": "https://github.com/conda/conda/actions/runs/31030473047",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
+          "skipped_jobs": 1
+        },
+        {
+          "id": 31045991456,
+          "run_number": 790,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-08-05T20:50:39Z",
+          "updated_at": "2026-08-05T20:50:40Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/31045991456",
+          "head_branch": "main",
+          "head_sha": "4a59f9bd0ca82d9296cd8beda80fff90ea06da87",
           "skipped_jobs": null
         }
       ]
