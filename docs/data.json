@@ -4,7 +4,7 @@
     "repo": "conda",
     "title": "GitHub Actions Performance Tracker",
     "description": "Monitor the duration and success rate of GitHub Actions workflows over time.",
-    "last_updated": "2026-09-19T02:03:23Z"
+    "last_updated": "2026-09-20T02:03:37Z"
   },
   "workflows": {
     "12042738": {
@@ -3330,6 +3330,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/35305618953",
           "head_branch": "main",
           "head_sha": "6981125ab969ed3a78f568ea1059c26bd11699ef",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 35420341647,
+          "run_number": 1871,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T04:05:12Z",
+          "updated_at": "2026-09-19T04:06:17Z",
+          "duration_seconds": 65,
+          "html_url": "https://github.com/conda/conda/actions/runs/35420341647",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
           "skipped_jobs": 0
         }
       ]
@@ -32735,6 +32749,20 @@
           "head_branch": "main",
           "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
           "skipped_jobs": null
+        },
+        {
+          "id": 35460678694,
+          "run_number": 14666,
+          "event": "issue_comment",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-19T18:16:44Z",
+          "updated_at": "2026-09-19T18:16:45Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/35460678694",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
+          "skipped_jobs": null
         }
       ]
     },
@@ -36069,6 +36097,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/35313463110",
           "head_branch": "main",
           "head_sha": "6981125ab969ed3a78f568ea1059c26bd11699ef",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 35425679505,
+          "run_number": 1670,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T06:05:42Z",
+          "updated_at": "2026-09-19T06:06:11Z",
+          "duration_seconds": 29,
+          "html_url": "https://github.com/conda/conda/actions/runs/35425679505",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
           "skipped_jobs": 0
         }
       ]
@@ -90609,6 +90651,34 @@
           "head_branch": "remove-classic-rebase",
           "head_sha": "27759951b01a410bf2151a357a712b0fc8ff9f7f",
           "skipped_jobs": 0
+        },
+        {
+          "id": 35460649532,
+          "run_number": 28531,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T18:16:08Z",
+          "updated_at": "2026-09-19T18:16:44Z",
+          "duration_seconds": 36,
+          "html_url": "https://github.com/conda/conda/actions/runs/35460649532",
+          "head_branch": "fix/16694-atomic-condarc-write",
+          "head_sha": "67a7e15732ef8e205c39f61a1a2a0575b452de0e",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 35460678766,
+          "run_number": 28532,
+          "event": "issue_comment",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-19T18:16:44Z",
+          "updated_at": "2026-09-19T18:16:45Z",
+          "duration_seconds": 1,
+          "html_url": "https://github.com/conda/conda/actions/runs/35460678766",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
+          "skipped_jobs": null
         }
       ]
     },
@@ -100291,6 +100361,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/35270115600",
           "head_branch": "update",
           "head_sha": "414c467ff962a3a87b254ae9b84c5a8978d30cf4",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 35460649568,
+          "run_number": 4831,
+          "event": "pull_request_target",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T18:16:08Z",
+          "updated_at": "2026-09-19T18:16:27Z",
+          "duration_seconds": 19,
+          "html_url": "https://github.com/conda/conda/actions/runs/35460649568",
+          "head_branch": "fix/16694-atomic-condarc-write",
+          "head_sha": "67a7e15732ef8e205c39f61a1a2a0575b452de0e",
           "skipped_jobs": 0
         }
       ]
@@ -146697,6 +146781,34 @@
           "head_branch": "remove-classic-rebase",
           "head_sha": "27759951b01a410bf2151a357a712b0fc8ff9f7f",
           "skipped_jobs": 0
+        },
+        {
+          "id": 35460649514,
+          "run_number": 15938,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "action_required",
+          "started_at": "2026-09-19T18:16:08Z",
+          "updated_at": "2026-09-19T18:16:08Z",
+          "duration_seconds": 0,
+          "html_url": "https://github.com/conda/conda/actions/runs/35460649514",
+          "head_branch": "fix/16694-atomic-condarc-write",
+          "head_sha": "67a7e15732ef8e205c39f61a1a2a0575b452de0e",
+          "skipped_jobs": null
+        },
+        {
+          "id": 35462048080,
+          "run_number": 15939,
+          "event": "schedule",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T18:42:20Z",
+          "updated_at": "2026-09-19T20:37:10Z",
+          "duration_seconds": 6890,
+          "html_url": "https://github.com/conda/conda/actions/runs/35462048080",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
+          "skipped_jobs": 0
         }
       ]
     },
@@ -164293,6 +164405,20 @@
           "html_url": "https://github.com/conda/conda/actions/runs/34687798284",
           "head_branch": "main",
           "head_sha": "4e8b347d2acee32c190c65c19494d234c189d4c1",
+          "skipped_jobs": 0
+        },
+        {
+          "id": 35436731411,
+          "run_number": 106,
+          "event": "dynamic",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T10:11:46Z",
+          "updated_at": "2026-09-19T10:14:27Z",
+          "duration_seconds": 161,
+          "html_url": "https://github.com/conda/conda/actions/runs/35436731411",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
           "skipped_jobs": 0
         }
       ]
@@ -217117,6 +217243,20 @@
           "head_branch": "main",
           "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
           "skipped_jobs": null
+        },
+        {
+          "id": 35467945014,
+          "run_number": 3718,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-19T20:37:12Z",
+          "updated_at": "2026-09-19T20:58:17Z",
+          "duration_seconds": 1265,
+          "html_url": "https://github.com/conda/conda/actions/runs/35467945014",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
+          "skipped_jobs": 2
         }
       ]
     },
@@ -240361,6 +240501,20 @@
           "head_branch": "main",
           "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
           "skipped_jobs": 0
+        },
+        {
+          "id": 35467944932,
+          "run_number": 1645,
+          "event": "workflow_run",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-09-19T20:37:12Z",
+          "updated_at": "2026-09-19T20:37:21Z",
+          "duration_seconds": 9,
+          "html_url": "https://github.com/conda/conda/actions/runs/35467944932",
+          "head_branch": "main",
+          "head_sha": "bb41f36cc956d0cbfbd79f2baebbf737dd118fe9",
+          "skipped_jobs": null
         }
       ]
     },
@@ -241219,6 +241373,20 @@
           "head_branch": "remove-classic-rebase",
           "head_sha": "27759951b01a410bf2151a357a712b0fc8ff9f7f",
           "skipped_jobs": 0
+        },
+        {
+          "id": 35460649397,
+          "run_number": 55,
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "action_required",
+          "started_at": "2026-09-19T18:16:08Z",
+          "updated_at": "2026-09-19T18:16:08Z",
+          "duration_seconds": 0,
+          "html_url": "https://github.com/conda/conda/actions/runs/35460649397",
+          "head_branch": "fix/16694-atomic-condarc-write",
+          "head_sha": "67a7e15732ef8e205c39f61a1a2a0575b452de0e",
+          "skipped_jobs": null
         }
       ]
     },
